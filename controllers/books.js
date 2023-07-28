@@ -8,7 +8,10 @@ exports.createBook = (req, res, next) => {
   book
     .save()
     .then(() => res.status(201).json({ message: "Objet enregistré !" }))
-    .catch((error) => res.status(400).json({ error }));
+    .catch((error) => {
+      console.log(error);
+      res.status(400).json({ error });
+    });
 };
 
 exports.modifyBook = (req, res, next) => {
@@ -32,8 +35,5 @@ exports.getOneBook = (req, res, next) => {
 exports.getAllBooks = (req, res, next) => {
   Book.find()
     .then((books) => res.status(200).json(books))
-    .catch((error) => {
-      console.log(error);
-      res.status(400).json({ error });
-    });
+    .catch((error) => res.status(404).json({ error }));
 };
