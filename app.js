@@ -1,9 +1,10 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 
 const booksRoutes = require("./routes/books");
 const userRoutes = require("./routes/user");
+
+const path = require("path");
 
 mongoose
   .connect(
@@ -15,24 +16,25 @@ mongoose
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json()); // prend toutes les requêtes qui ont comme Content-Type  application/json  et met à disposition leur  body  directement sur l'objet req
 
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "*"); //permet d'accéder à notre API depuis n'importe quelle origine ( '*' )
   res.setHeader(
+    //permet d'ajouter les headers mentionnés aux requêtes envoyées vers notre API (Origin , X-Requested-With , etc.)
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
   );
   res.setHeader(
+    //permet d'envoyer des requêtes avec les méthodes mentionnées ( GET ,POST , etc.)
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, PATCH, OPTIONS"
   );
   next();
 });
 
-app.use(bodyParser.json());
-
-app.use("/api/books", booksRoutes);
+app.use("/api/books", booksRoutes); // endpoint visé par l'api
 app.use("/api/auth", userRoutes);
+app.use("/images", express.static(path.join(__dirname, "images")));
 
 module.exports = app;
