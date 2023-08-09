@@ -75,15 +75,16 @@ exports.addRating = (req, res, next) => {
     userId: req.auth.userId,
     grade: rating,
   };
-  Book.findOneAndUpdate({ _id: req.params.id }, { $push: { ratings: newRating } }, { new: true })//troisième argument de findOneAndUpdate pour que la méthode renvoie le document mis à jour.
+  Book.findOne({ _id: req.params.id })//troisième argument de findOneAndUpdate pour que la méthode renvoie le document mis à jour.
     .then((book) => {
       if (book.userId !== req.auth.userId) {
+        book.ratings.push(newRating)
         const sumRatings = book.ratings.reduce((sum, rating) => sum + rating.grade, 0);
         book.averageRating = sumRatings / book.ratings.length;
         book.save()
           .then((book) => res.status(200).json(book));
       } else {
-        return res.status(404).json({ error });
+        return res.status(400).json({ error });
       }
     })
     .catch((error) => {
