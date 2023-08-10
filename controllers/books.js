@@ -31,7 +31,7 @@ exports.modifyBook = (req, res, next) => {
   Book.findOne({ _id: req.params.id })
     .then((book) => {
       if (book.userId !== req.auth.userId) {
-        res.status(403).json({ message: "unauthorized request" });
+        res.status(403).json({ message: "Requête non autorisée" });
       }
       else {
         Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
@@ -52,7 +52,7 @@ exports.deleteBook = (req, res, next) => {
   Book.findOne({ _id: req.params.id })
     .then((book) => {
       if (book.userId !== req.auth.userId) {
-        res.status(403).json({ message: "unauthorized request" });
+        res.status(403).json({ message: "Requête non autorisée" });
       } else {
         const filename = book.imageUrl.split("/images/")[1];
         fs.unlink(`images/${filename}`, () => {
@@ -75,16 +75,22 @@ exports.addRating = (req, res, next) => {
     userId: req.auth.userId,
     grade: rating,
   };
-  Book.findOne({ _id: req.params.id })//troisième argument de findOneAndUpdate pour que la méthode renvoie le document mis à jour.
+  Book.findOne({ _id: req.params.id })
     .then((book) => {
-      if (book.userId !== req.auth.userId) {
-        book.ratings.push(newRating)
-        const sumRatings = book.ratings.reduce((sum, rating) => sum + rating.grade, 0);
-        book.averageRating = sumRatings / book.ratings.length;
-        book.save()
-          .then((book) => res.status(200).json(book));
+      if (book) {
+        const userHasVoted = book.ratings.some((rating) => rating.userId === req.auth.userId);
+        if (!userHasVoted) {
+          book.ratings.push(newRating);
+          const sumRatings = book.ratings.reduce((sum, rating) => sum + rating.grade, 0);
+          book.averageRating = sumRatings / book.ratings.length;
+          book.averageRating = parseFloat(book.averageRating.toFixed(2));
+          book.save()
+            .then((book) => res.status(200).json(book));
+        } else {
+          return res.status(400).json({ error: "L'utilisateur a déjà voté" });
+        }
       } else {
-        return res.status(400).json({ error });
+        return res.status(404).json({ error: "Livre non trouvé" });
       }
     })
     .catch((error) => {
